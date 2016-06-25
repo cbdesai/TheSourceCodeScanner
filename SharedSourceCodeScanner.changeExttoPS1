@@ -1,0 +1,36 @@
+﻿$startDirectory = 'C:\ThisIsYourTopDirToScanFrom'
+$searchString = '\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b'
+
+
+$outputFileDirectryListing = 'C:\OutPutDir\OutputFileCat1.txt'
+$outPutFileWithPatrn = 'C:\OutPutDir\OutputFileCat2.txt'
+$outPutFilePatrnOfIntrst = 'C:\OutPutDir\OutputFileCat3.txt'
+
+
+$eliminateExtnsn = @("*.dll", "*.txt", "*.jar", "*.cache", "*.MDF", "*.war", "*.sdf", "*.pdb", "*.pdf", "*.zip", "*.dat", "*.nupkg", "*.DLL", "*.EXE", "*.exe", "*.gif","*.PNG", "*.png", "*.jpg", "*.jpeg")
+$elmnteLnsWthWrds = @("version", "Version", "Version=", "Global.System.CodeDom.Compiler", "szOID", "<x]", "version=", "Generated at")
+
+#$someThingwithDB = @("connectionString", "Database", "ConnectionString", "Connectionstring", "odbc")
+$someThingwithDB = "connectionString|Database|ConnectionString|Connectionstring|odbc"
+
+
+   
+         $e = $ErrorActionPreference
+         $ErrorActionPreference="stop"
+         try{    
+                $collOfFlsToScn = Get-ChildItem -recurse $startDirectory -Exclude $eliminateExtnsn | where {$_.Attributes -ne 'Directory'}
+                $collOfFlsToScn.FullName| Add-Content $outputFileDirectryListing #we want to see all code specific files in the directry 
+                
+      
+                $CollOfLnsWithPatrn = Select-String -path $collOfFlsToScn.FullName -pattern $searchString -AllMatches | Select-String  -pattern $elmnteLnsWthWrds -NotMatch 
+                $CollOfLnsWithPatrn | Add-Content $outPutFileWithPatrn #we want to see all lines that matached 
+
+                
+                $CollOfLnsWithPatrn | foreach { if($_.ToString() -match $someThingwithDB) {$_.ToString() + ":Database"} else {$_} } | Add-Content $outPutFilePatrnOfIntrst
+                #we want to stamp database if database, connectstring  is found 
+
+         }
+         catch{
+                $ErrorActionPreference=$e
+         }
+         $ErrorActionPreference=$e;
